@@ -29,6 +29,13 @@ def sigmoid(z):
     return the sigmoid of input z (same dimensions as z)
     '''
     # remove the next line and replace it with your code
+    if isinstance(z, (float, int)):
+        z = 1/(1+np.exp(-z))
+    else:
+        shape = z.shape
+        z = z.flatten()
+        z = np.array(list(map(lambda val: 1/(1+np.exp(-val)), z)))
+        z = z.reshape(shape)
     return z 
 
 def nnObjFunction(params, *args):
@@ -68,9 +75,54 @@ def nnObjFunction(params, *args):
     W2 = params[(n_hidden * (n_input + 1)):].reshape((n_class, (n_hidden + 1)))
 
     # remove the next two lines and replace them with your code 
-    obj_val = 0
-    obj_grad = params 
+    ####################compute objective function########################
+    bias0 = np.ones((train_data.shape[0], 1))
+    X = np.concatenate((train_data, bias0), axis=1)
+    l1_input = X @ W1.T
+    l1_output = sigmoid(l1_input)
+    bias1 = np.ones((l1_output.shape[0], 1))
+    l1_output = np.concatenate((l1_output, bias1), axis=1)
+    l2_input = l1_output @ W2.T
+    l2_output = sigmoid(l2_input)
+    one_of_k = np.zeros((train_label.size, train_label.max()+1))
+    one_of_k[np.arange(train_label.size),train_label] = 1
 
+    loss=0
+    for i in range(train_data.shape[0]):
+        for l in range(n_class):
+            yil = one_of_k[i][l]
+            oil = l2_output[i][l]
+
+            loss+=(yil*np.log(oil))
+            loss+=((1-yil)*np.log(1-oil))
+    loss*=(-1/train_data.shape[0])
+
+    reg = lambdaval*(np.sum(W1.reshape(-1)**2) + np.sum(W2.reshape(-1)**2))/(2*train_data.shape[0])
+
+    obj_val = loss+reg
+
+    ####################compute gradient of objective function########################
+    w1_grad = []
+    w2_grad = []
+    for i in range(train_data.shape[0]):
+        ############gradient w.r.t. W2################
+        delta = (l2_output[i] - one_of_k[i]).reshape(1,-1)
+        z = (l1_output[i]).reshape(1,-1)
+        
+        w2_grad.append((delta.T @ z).flatten())
+
+        ############gradient w.r.t. W1################
+        z = (l1_output[:,:-1][i]).reshape(1,-1)
+        z = z*(1-z)
+        phi = delta @ W2[:,:-1]
+        phi = z*phi
+        Xp = (X[i]).reshape(1,-1)
+        w1_grad.append((phi.T @ Xp).flatten())
+
+    w1_grad=(np.sum(w1_grad, axis=0)+lambdaval*W1.flatten())/train_data.shape[0]
+    w2_grad=(np.sum(w2_grad, axis=0)+lambdaval*W2.flatten())/train_data.shape[0]
+    
+    obj_grad = np.hstack([w1_grad, w2_grad])
     return (obj_val,obj_grad)
 
 def nnPredict(W1, W2, data):
@@ -87,6 +139,29 @@ def nnPredict(W1, W2, data):
     % label: a column vector of predicted labels
     '''
     # remove the next line and replace it with your code
-    labels = np.zeros((data.shape[0],1))
+    labels = []
+    for x in data:
+        x = np.append(x, [1])
+
+        ########hidden layer########
+        l1_input = []
+        for w in W1:
+            cell_input = w @ x
+            l1_input.append(cell_input)
+        l1_input = np.array(l1_input)
+        l1_output = sigmoid(l1_input)
+
+        ########output layer########
+        l1_output = np.append(l1_output, [1])
+        l2_input = []
+        for w in W2:
+            cell_input = w @ l1_output
+            l2_input.append(cell_input)
+        l2_input = np.array(l2_input)
+        l2_output = sigmoid(l2_input)
+
+        labels.append(np.argmax(l2_output))
+
+    labels = np.array(labels).reshape(-1,1)
 
     return labels

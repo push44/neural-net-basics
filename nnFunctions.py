@@ -84,7 +84,7 @@ def nnObjFunction(params, *args):
     l1_output = np.concatenate((l1_output, bias1), axis=1)
     l2_input = l1_output @ W2.T
     l2_output = sigmoid(l2_input)
-    one_of_k = np.zeros((train_label.size, train_label.max()+1))
+    one_of_k = np.zeros((train_label.size, train_label.max()+1), dtype="int64")
     one_of_k[np.arange(train_label.size),train_label] = 1
 
     loss=0

@@ -76,6 +76,7 @@ def nnObjFunction(params, *args):
 
     # remove the next two lines and replace them with your code 
     ####################compute objective function########################
+    train_label = np.array(list(map(int, train_label)))
     bias0 = np.ones((train_data.shape[0], 1))
     X = np.concatenate((train_data, bias0), axis=1)
     l1_input = X @ W1.T
@@ -139,29 +140,15 @@ def nnPredict(W1, W2, data):
     % label: a column vector of predicted labels
     '''
     # remove the next line and replace it with your code
+    # Your code here
+
     labels = []
-    for x in data:
-        x = np.append(x, [1])
+    bias = np.ones([data.shape[0]])
+    data = np.column_stack([data, bias])
+    hidden_layer = sigmoid(np.dot(data, W1.T))
 
-        ########hidden layer########
-        l1_input = []
-        for w in W1:
-            cell_input = w @ x
-            l1_input.append(cell_input)
-        l1_input = np.array(l1_input)
-        l1_output = sigmoid(l1_input)
-
-        ########output layer########
-        l1_output = np.append(l1_output, [1])
-        l2_input = []
-        for w in W2:
-            cell_input = w @ l1_output
-            l2_input.append(cell_input)
-        l2_input = np.array(l2_input)
-        l2_output = sigmoid(l2_input)
-
-        labels.append(np.argmax(l2_output))
-
-    labels = np.array(labels).reshape(-1,1)
-
+    bias1 = np.ones([hidden_layer.shape[0]])
+    data1 = np.column_stack([hidden_layer,bias1])
+    outer_layer = sigmoid(np.dot(data1, W2.T))
+    labels = np.argmax(outer_layer, axis = 1)
     return labels

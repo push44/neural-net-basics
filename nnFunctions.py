@@ -144,11 +144,11 @@ def nnPredict(W1, W2, data):
 
     labels = []
     bias = np.ones([data.shape[0]])
-    data = np.column_stack([data, bias])
+    data = np.hstack([data, bias])
     hidden_layer = sigmoid(np.dot(data, W1.T))
 
     bias1 = np.ones([hidden_layer.shape[0]])
-    data1 = np.column_stack([hidden_layer,bias1])
+    data1 = np.hstack([hidden_layer,bias1])
     outer_layer = sigmoid(np.dot(data1, W2.T))
     labels = np.argmax(outer_layer, axis = 1)
     return labels
